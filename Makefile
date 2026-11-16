@@ -1,4 +1,4 @@
-.PHONY: install test lint format run
+.PHONY: install test lint format data
 
 install:
 	pip install -e ".[dev]"
@@ -14,5 +14,5 @@ format:
 	ruff format src tests
 	ruff check --fix src tests
 
-run:
-	mqc --config configs/baseline.yaml
+data:
+	mqc prepare --config configs/baseline.yaml

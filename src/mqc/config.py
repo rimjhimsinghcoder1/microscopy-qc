@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import yaml
 
-REQUIRED_KEYS = {"seed", "data", "qc_classes", "output_dir"}
+REQUIRED_KEYS = {"seed", "data", "qc_classes", "degradations", "output_dir"}
 
 
 def load_config(path: str | Path) -> dict[str, Any]:

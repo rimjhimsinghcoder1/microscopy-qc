@@ -1,11 +1,12 @@
 # All experiment settings live here, not inside the code.
-# Change a value here -> rerun -> the run folder records exactly what was used.
+# Change a value here -> rerun -> the output metadata records exactly what was used.
 
 seed: 42
 
 data:
-  dataset: bloodmnist      # MedMNIST subset, downloaded in Phase 2
-  image_size: 28
+  dataset: bloodmnist      # MedMNIST subset; URL and checksum are in src/mqc/data.py
+  raw_dir: data/raw
+  processed_path: data/processed/qc_dataset.npz
   n_per_class: 500         # images per QC class, kept small so it runs on a laptop CPU
   split: [0.7, 0.15, 0.15] # train / val / test
 
@@ -14,5 +15,12 @@ qc_classes:                # labels the model learns to predict
   - blurry
   - overexposed
   - noisy
+
+# Severity of each degradation is drawn uniformly from [low, high] per image,
+# so the task is not trivially easy and mild cases exist.
+degradations:
+  blur_sigma: [0.8, 2.0]      # Gaussian blur, in pixels
+  exposure_gain: [1.5, 2.5]   # brightness multiplier before clipping to [0, 1]
+  noise_std: [0.05, 0.15]     # Gaussian noise standard deviation
 
 output_dir: runs
