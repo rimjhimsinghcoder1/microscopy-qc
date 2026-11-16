@@ -1,6 +1,6 @@
 # microscopy-qc
 
-[![CI](https://github.com/aapka-username/microscopy-qc/actions/workflows/ci.yml/badge.svg)](https://github.com/aapka-username/microscopy-qc/actions/workflows/ci.yml)
+[![CI](https://github.com/rimjhimsinghcoder1/microscopy-qc/actions/workflows/ci.yml/badge.svg)](https://github.com/rimjhimsinghcoder1/microscopy-qc/actions/workflows/ci.yml)
 
 **Reproducible, explainable quality control for microscopy images: a small
 decision-support system that flags out-of-focus, overexposed and noisy images,
