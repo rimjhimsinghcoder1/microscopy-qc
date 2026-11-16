@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tools
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Downloaded data and generated outputs (re-created by `make data` / `make train`)
+data/*
+!data/.gitkeep
+runs/
+
+# OS
+.DS_Store

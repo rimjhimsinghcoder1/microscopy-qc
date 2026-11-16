@@ -1,0 +1,18 @@
+# All experiment settings live here, not inside the code.
+# Change a value here -> rerun -> the run folder records exactly what was used.
+
+seed: 42
+
+data:
+  dataset: bloodmnist      # MedMNIST subset, downloaded in Phase 2
+  image_size: 28
+  n_per_class: 500         # images per QC class, kept small so it runs on a laptop CPU
+  split: [0.7, 0.15, 0.15] # train / val / test
+
+qc_classes:                # labels the model learns to predict
+  - good
+  - blurry
+  - overexposed
+  - noisy
+
+output_dir: runs
