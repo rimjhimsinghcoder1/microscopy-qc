@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      # The CPU-only PyTorch build is much smaller than the default CUDA build.
+      # It satisfies the torch==2.15.0 pin in pyproject.toml.
+      - name: Install CPU-only PyTorch
+        run: pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: Lint and format check
+        run: make lint
+
+      # Tests use small synthetic images, so no dataset download is needed.
+      - name: Tests
+        run: make test

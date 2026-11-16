@@ -71,3 +71,14 @@ def test_report_refuses_changed_dataset(run_dir):
 def test_latest_run_errors_when_empty(tmp_path):
     with pytest.raises(FileNotFoundError):
         latest_run(tmp_path)
+
+
+def test_results_markdown_is_generated(run_dir, tmp_path):
+    from mqc import results_md
+
+    build_report(run_dir, target_accuracy=0.9)
+    path = results_md.write(run_dir, tmp_path / "results.md")
+    text = path.read_text()
+    assert "| Logistic regression" in text
+    assert "(recommended)" in text
+    assert "Do not edit by hand" in text

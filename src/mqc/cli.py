@@ -10,7 +10,7 @@ import json
 import shutil
 from pathlib import Path
 
-from mqc import __version__
+from mqc import __version__, results_md
 from mqc.config import load_config, set_seed
 from mqc.data import download, load_images, md5sum
 from mqc.dataset import build_qc_dataset, save_dataset, stratified_split
@@ -90,6 +90,7 @@ def report(config: dict, run: str | None, target_accuracy: float) -> None:
     for png in out.glob("*.png"):
         shutil.copy2(png, figures_dir / png.name)
     print(f"Figures copied to {figures_dir}/")
+    print(f"Results table written to {results_md.write(run_dir)}")
 
 
 def main(argv: list[str] | None = None) -> None:
