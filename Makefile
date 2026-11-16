@@ -1,4 +1,4 @@
-.PHONY: install test lint format data
+.PHONY: install test lint format data train
 
 install:
 	pip install -e ".[dev]"
@@ -16,3 +16,6 @@ format:
 
 data:
 	mqc prepare --config configs/baseline.yaml
+
+train:
+	mqc train --config configs/baseline.yaml
