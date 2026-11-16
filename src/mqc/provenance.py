@@ -10,7 +10,7 @@ from typing import Any
 from mqc import __version__
 from mqc.data import md5sum
 
-_PACKAGES = ["numpy", "scikit-learn", "joblib", "torch", "pyyaml"]
+_PACKAGES = ["numpy", "scikit-learn", "joblib", "torch", "matplotlib", "pyyaml"]
 
 
 def git_info() -> dict[str, Any]:

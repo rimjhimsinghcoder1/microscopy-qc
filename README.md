@@ -2,7 +2,7 @@
 
 Reproducible, explainable quality control (QC) for microscopy images.
 
-> **Status:** work in progress, Phase 4 of 7 (CNN and fusion models).
+> **Status:** work in progress, Phase 5 of 7 (calibration, human review, explainability).
 
 ## Problem
 
@@ -31,6 +31,8 @@ make install
 make test
 make data      # downloads BloodMNIST and builds the QC dataset
 make train     # trains all 4 models (~1 min on a laptop CPU); results in runs/<timestamp>/
+make report    # calibration, review policy and figures for the latest run
+# or simply: make all
 ```
 
 ## Reproducibility
@@ -44,6 +46,8 @@ make train     # trains all 4 models (~1 min on a laptop CPU); results in runs/<
   exactly how its data was made.
 - Each degraded image stores its severity, so errors can be analysed by how
   strong the degradation was.
+- `mqc report` refuses to run if the dataset's checksum differs from the one
+  recorded at training time.
 
 ## Data
 
@@ -126,6 +130,49 @@ What this shows:
   of overfitting; the simpler logistic regression generalises better.
 - The confidence intervals overlap, so with 300 test images the ranking of
   the top models is suggestive rather than conclusive.
+
+## From prediction to decision support
+
+A QC tool in a lab should not just output a label. It should say how sure it
+is, and hand uncertain images to a person. `make report` does this for every
+model, using only validation data to make choices and test data to report.
+
+1. **Calibration.** A temperature T is fitted on validation log-loss and
+   applied unchanged to test. Expected calibration error (ECE) is reported
+   before and after. All four models came out slightly *under*-confident
+   (T < 1), which is typical after weight decay and early stopping.
+2. **Human-review policy.** On validation, the lowest confidence threshold
+   whose automatically decided images reach **99% accuracy** is chosen. Images
+   below it are flagged for a person. The model that automates the most on
+   validation is recommended; its test result is reported, not used to choose.
+
+| Model | Auto-decided (test) | Accuracy when auto-decided | Errors sent to review |
+|---|---|---|---|
+| Logistic regression | 89.7% | 98.9% | 7 of 10 |
+| Random forest | 85.3% | 98.0% | 13 of 18 |
+| CNN | 95.3% | 99.0% | 8 of 11 |
+| **Fusion (recommended)** | 93.0% | **99.3%** | 4 of 6 |
+
+![Coverage vs accuracy](reports/figures/coverage.png)
+
+![Fusion calibration](reports/figures/reliability.png)
+
+## Explainability
+
+**Feature model.** Logistic-regression weights read like a lab checklist:
+high `noise_sigma` pushes towards *noisy*, high `p99_intensity` towards
+*overexposed*, high `laplacian_var` (sharpness) towards *good*.
+
+![Logistic regression weights](reports/figures/lr_weights.png)
+
+**CNN (Grad-CAM).** For *blurry* images the network attends to cell edges,
+where focus loss is visible. For *overexposed* and *noisy* images it attends to
+the background, where saturation and noise are easiest to see against a flat
+area.
+
+![Grad-CAM](reports/figures/gradcam.png)
+
+![Confusion matrix](reports/figures/confusion.png)
 
 **Reproducibility check.** The scikit-learn results above were produced
 independently on macOS (Apple Silicon) and Linux (x86-64) from the same commit

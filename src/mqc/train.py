@@ -44,8 +44,10 @@ def _fit(name, params, data, X, n_classes, seed, out: Path):
         torch.save(
             {
                 "state_dict": model.net.state_dict(),
-                "feature_mean": model.feature_mean,
-                "feature_std": model.feature_std,
+                # Stored as tensors so the file loads with weights_only=True,
+                # which refuses to run arbitrary pickled code.
+                "feature_mean": torch.from_numpy(model.feature_mean),
+                "feature_std": torch.from_numpy(model.feature_std),
                 "params": params,
             },
             out / "model.pt",

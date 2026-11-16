@@ -130,3 +130,16 @@ def train_torch_model(
 
     net.load_state_dict(best_state)
     return model
+
+
+def load_torch_classifier(
+    path, name: str, n_classes: int, n_features: int
+) -> TorchClassifier:
+    """Rebuild a saved model from `model.pt` for prediction or explanation."""
+    saved = torch.load(path, weights_only=True)
+    net = build_net(name, n_classes, n_features, saved["params"].get("width", 16))
+    net.load_state_dict(saved["state_dict"])
+    net.eval()
+    return TorchClassifier(
+        net, saved["feature_mean"].numpy(), saved["feature_std"].numpy()
+    )
