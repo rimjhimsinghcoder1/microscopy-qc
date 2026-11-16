@@ -31,6 +31,26 @@ def classification_metrics(
     }
 
 
+def bootstrap_ci(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    n_resamples: int = 2000,
+    level: float = 0.95,
+    seed: int = 0,
+) -> list[float]:
+    """Bootstrap confidence interval for accuracy.
+
+    With 300 test images, one image is 0.33 percentage points, so two models a
+    point or two apart may not really differ. The interval makes that visible.
+    """
+    rng = np.random.default_rng(seed)
+    correct = (y_true == y_pred).astype(float)
+    idx = rng.integers(0, len(correct), size=(n_resamples, len(correct)))
+    accs = correct[idx].mean(axis=1)
+    alpha = (1 - level) / 2
+    return [float(np.quantile(accs, alpha)), float(np.quantile(accs, 1 - alpha))]
+
+
 def recall_by_severity(
     y_true: np.ndarray,
     y_pred: np.ndarray,

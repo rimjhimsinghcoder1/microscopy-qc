@@ -33,5 +33,20 @@ models:
   random_forest:
     n_estimators: 300
     min_samples_leaf: 2
+  # PyTorch models (Phase 4). Trained on CPU; early stopping on validation loss.
+  cnn:
+    width: 16
+    lr: 0.001
+    weight_decay: 0.0001
+    batch_size: 64
+    epochs: 60
+    patience: 8
+  fusion:
+    width: 16
+    lr: 0.001
+    weight_decay: 0.0001
+    batch_size: 64
+    epochs: 60
+    patience: 8
 
 output_dir: runs

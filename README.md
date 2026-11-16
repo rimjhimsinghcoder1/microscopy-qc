@@ -2,7 +2,7 @@
 
 Reproducible, explainable quality control (QC) for microscopy images.
 
-> **Status:** work in progress, Phase 3 of 7 (QC features and classical models).
+> **Status:** work in progress, Phase 4 of 7 (CNN and fusion models).
 
 ## Problem
 
@@ -30,7 +30,7 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 make install
 make test
 make data      # downloads BloodMNIST and builds the QC dataset
-make train     # trains feature models; results go to runs/<timestamp>/
+make train     # trains all 4 models (~1 min on a laptop CPU); results in runs/<timestamp>/
 ```
 
 ## Reproducibility
@@ -82,6 +82,56 @@ Each feature mirrors something a scientist would check by eye:
 
 Two classical models use them: logistic regression (weights are directly
 readable) and a random forest.
+
+## Neural models
+
+- **`cnn`**: a small CNN (4 conv layers, ~17k parameters) on the raw image.
+  The first two layers keep full resolution because blur and noise live in fine
+  detail. Images are not normalised per image, since brightness is itself the
+  signal for overexposure.
+- **`fusion`**: the CNN's image embedding concatenated with the 7 standardised
+  QC features, then a small MLP. Feature scaling uses training data only.
+
+Both are trained with Adam and early stopping on validation loss. The training
+loop is written out explicitly in `src/mqc/torch_train.py`.
+
+## Results
+
+Test set: 300 images (75 per class). 95% confidence intervals from 2,000
+bootstrap resamples.
+
+| Model | Val acc | Test acc | Test 95% CI | Test macro-F1 |
+|---|---|---|---|---|
+| Logistic regression (features) | 0.963 | 0.967 | 0.943-0.987 | 0.967 |
+| Random forest (features) | 0.980 | 0.940 | 0.910-0.967 | 0.940 |
+| CNN (pixels) | 0.967 | 0.963 | 0.940-0.983 | 0.964 |
+| **Fusion (pixels + features)** | 0.973 | **0.980** | 0.963-0.993 | 0.980 |
+
+Test recall on the **mildest third** of each degradation (medium and severe
+cases are 100% for all models):
+
+| Model | Blurry | Overexposed | Noisy |
+|---|---|---|---|
+| Logistic regression | **0.88** | 0.96 | 0.80 |
+| CNN | 0.72 | 0.96 | 0.96 |
+| Fusion | 0.84 | 0.96 | **1.00** |
+
+What this shows:
+
+- Every error is a mildly degraded image predicted as `good`; no degradation
+  type is ever confused with another.
+- The hand-made sharpness features catch mild blur better than the CNN; the CNN
+  catches mild noise better than the features. Fusion combines both strengths.
+- The random forest's 4-point drop from validation to test is a warning sign
+  of overfitting; the simpler logistic regression generalises better.
+- The confidence intervals overlap, so with 300 test images the ranking of
+  the top models is suggestive rather than conclusive.
+
+**Reproducibility check.** The scikit-learn results above were produced
+independently on macOS (Apple Silicon) and Linux (x86-64) from the same commit
+and dataset checksum and matched to every reported digit. Two consecutive runs
+on the same machine give byte-identical `summary.json` for all four models.
+Neural-network results may differ in the last decimals across hardware.
 
 ## Run outputs
 

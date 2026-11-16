@@ -6,7 +6,7 @@ import pytest
 from mqc.dataset import build_qc_dataset, save_dataset, stratified_split
 from mqc.evaluate import classification_metrics, recall_by_severity
 from mqc.models import build_feature_model
-from mqc.train import train_feature_models
+from mqc.train import train_models
 
 CLASSES = ["good", "blurry", "overexposed", "noisy"]
 
@@ -32,7 +32,7 @@ def config(tmp_path, ranges):
 
 
 def test_training_writes_expected_files(config, tmp_path):
-    run_dir = train_feature_models(config)
+    run_dir = train_models(config)
     for name in ("config.yaml", "provenance.json", "summary.json"):
         assert (run_dir / name).exists()
     for model in config["models"]:
@@ -44,15 +44,15 @@ def test_training_writes_expected_files(config, tmp_path):
 
 def test_models_learn_something(config):
     """Synthetic degradations are easy to spot, so accuracy should beat chance."""
-    run_dir = train_feature_models(config)
+    run_dir = train_models(config)
     summary = json.loads((run_dir / "summary.json").read_text())
     for scores in summary.values():
         assert scores["test"]["accuracy"] > 0.5  # chance is 0.25
 
 
 def test_training_is_reproducible(config, tmp_path):
-    a = train_feature_models(config, run_root=tmp_path / "a")
-    b = train_feature_models(config, run_root=tmp_path / "b")
+    a = train_models(config, run_root=tmp_path / "a")
+    b = train_models(config, run_root=tmp_path / "b")
     for model in config["models"]:
         ma = json.loads((a / model / "metrics.json").read_text())
         mb = json.loads((b / model / "metrics.json").read_text())
@@ -78,3 +78,23 @@ def test_recall_by_severity_bins():
     bins = recall_by_severity(y_true, y_pred, severity, CLASSES)["blurry"]
     assert [b["recall"] for b in bins] == [0.0, 1.0, 1.0]
     assert bins[0]["severity_max"] < bins[-1]["severity_min"]
+
+
+def test_predictions_and_ci_saved(config):
+    run_dir = train_models(config)
+    model = next(iter(config["models"]))
+    with np.load(run_dir / model / "predictions.npz") as p:
+        assert p["test_proba"].shape[1] == len(CLASSES)
+    summary = json.loads((run_dir / "summary.json").read_text())
+    lo, hi = summary[model]["test"]["accuracy_95ci"]
+    assert lo <= summary[model]["test"]["accuracy"] <= hi
+
+
+def test_bootstrap_ci_contains_accuracy():
+    from mqc.evaluate import bootstrap_ci
+
+    y = np.array([0, 1] * 50)
+    pred = y.copy()
+    pred[:10] = 1 - pred[:10]  # 90% correct
+    lo, hi = bootstrap_ci(y, pred)
+    assert lo < 0.9 < hi

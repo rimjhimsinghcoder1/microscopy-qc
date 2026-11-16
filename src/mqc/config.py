@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import torch
 import yaml
 
 REQUIRED_KEYS = {"seed", "data", "qc_classes", "degradations", "output_dir"}
@@ -21,9 +22,13 @@ def load_config(path: str | Path) -> dict[str, Any]:
 
 
 def set_seed(seed: int) -> None:
-    """Make Python and NumPy randomness repeatable.
+    """Make Python, NumPy and PyTorch randomness repeatable.
 
-    PyTorch seeding is added in Phase 4, when PyTorch becomes a dependency.
+    Deterministic algorithms make repeated runs on the same machine identical.
+    Different hardware or BLAS libraries can still change the last decimals of
+    neural-network results; the scikit-learn models match exactly across machines.
     """
     random.seed(seed)
     np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.use_deterministic_algorithms(True)

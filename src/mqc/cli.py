@@ -11,7 +11,7 @@ from mqc import __version__
 from mqc.config import load_config, set_seed
 from mqc.data import download, load_images, md5sum
 from mqc.dataset import build_qc_dataset, save_dataset, stratified_split
-from mqc.train import train_feature_models
+from mqc.train import train_models
 
 
 def prepare(config: dict) -> None:
@@ -45,15 +45,18 @@ def prepare(config: dict) -> None:
 def train(config: dict) -> None:
     if "models" not in config:
         raise ValueError("config has no 'models' section to train")
-    run_dir = train_feature_models(config)
+    run_dir = train_models(config)
     summary = json.loads((run_dir / "summary.json").read_text())
     print(f"Run saved to {run_dir}")
-    print(f"{'model':<22}{'val acc':>9}{'test acc':>10}{'test F1':>9}")
+    print(
+        f"{'model':<22}{'val acc':>9}{'test acc':>10}{'test 95% CI':>17}{'test F1':>9}"
+    )
     for name, s in summary.items():
         val, test = s["val"], s["test"]
+        lo, hi = test["accuracy_95ci"]
         print(
-            f"{name:<22}{val['accuracy']:>9.3f}"
-            f"{test['accuracy']:>10.3f}{test['macro_f1']:>9.3f}"
+            f"{name:<22}{val['accuracy']:>9.3f}{test['accuracy']:>10.3f}"
+            f"{f'[{lo:.3f}, {hi:.3f}]':>17}{test['macro_f1']:>9.3f}"
         )
 
 
@@ -65,7 +68,7 @@ def main(argv: list[str] | None = None) -> None:
     p_prepare = sub.add_parser("prepare", help="download data and build QC dataset")
     p_prepare.add_argument("--config", default="configs/baseline.yaml")
 
-    p_train = sub.add_parser("train", help="train and evaluate feature models")
+    p_train = sub.add_parser("train", help="train and evaluate all models")
     p_train.add_argument("--config", default="configs/baseline.yaml")
 
     args = parser.parse_args(argv)
