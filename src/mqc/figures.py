@@ -34,7 +34,7 @@ plt.rcParams.update(
         "ytick.color": MUTED,
         "font.size": 9,
         "legend.frameon": False,
-        "savefig.dpi": 160,
+        "savefig.dpi": 300,
         "savefig.bbox": "tight",
     }
 )
